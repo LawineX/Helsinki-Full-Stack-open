@@ -33,13 +33,14 @@ const PersonForm = ({
   );
 };
 
-const Numbers = ({ addressBook, filter }) => (
+const Numbers = ({ addressBook, filter, onDelete }) => (
   <div>
     {addressBook.map((entry) => {
       if (entry.name.toLowerCase().startsWith(filter.toLowerCase())) {
         return (
           <li key={entry.name}>
             {entry.name}: {entry.number}
+            <button onClick={() => onDelete(entry.id)}>delete</button>
           </li>
         );
       }

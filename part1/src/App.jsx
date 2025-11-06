@@ -1,31 +1,60 @@
 import { useEffect, useState } from "react";
 import { PersonForm, Filter, Numbers } from "./components/Address";
 import axios from "axios";
+import addressService from "./services/address";
 const App = () => {
   const [persons, setPersons] = useState([]);
   useEffect(() => {
-    axios.get("http://localhost:3001/persons").then((response) => {
-      setPersons(response.data);
+    addressService.getAll().then((data) => {
+      setPersons(data);
     });
   }, []);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [newName, setNewName] = useState("");
+  const [filter, setFilter] = useState("");
+
   const handleFormSubmit = (event) => {
     event.preventDefault();
     if (persons.some((person) => person.name === newName)) {
-      alert(`${newName} is already added to phonebook`);
+      if (window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`)) {
+        const personToUpdate = persons.find((p) => p.name === newName);
+        addressService
+          .updateEntry(personToUpdate.id, { name: newName, number: phoneNumber })
+          .then((updatedPerson) => {
+            setPersons(
+              persons.map((person) =>
+                person.id !== personToUpdate.id ? person : updatedPerson
+              )
+            );
+          });
+      }
       setNewName("");
       setPhoneNumber("");
       return;
     }
-    setPersons([...persons, { name: newName, number: phoneNumber }]);
+    addressService
+      .addNew({ name: newName, number: phoneNumber })
+      .then((data) => {
+        setPersons([...persons, data]);
+      });
     setNewName("");
     setPhoneNumber("");
   };
 
-  const [filter, setFilter] = useState("");
   const handleFilterChange = (event) => setFilter(event.target.value);
-
+  const handleDelete = (id) => {
+    if (
+      window.confirm(`Are you sure you want to delete this entry?
+    ${persons.find((p) => p.id === id).name}
+    number: ${persons.find((p) => p.id === id).number}`)
+    ) {
+      addressService.deleteEntry(id).then(() => {
+        setPersons(persons.filter((person) => person.id !== id));
+      });
+    } else {
+      return;
+    }
+  };
   return (
     <div>
       <h2>Phonebook</h2>
@@ -39,7 +68,7 @@ const App = () => {
         setPhoneNumber={setPhoneNumber}
       />
       <h2>Numbers</h2>
-      <Numbers addressBook={persons} filter={filter} />
+      <Numbers addressBook={persons} filter={filter} onDelete={handleDelete} />
     </div>
   );
 };
