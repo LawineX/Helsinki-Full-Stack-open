@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { PersonForm, Filter, Numbers } from "./components/Address";
 import axios from "axios";
 import addressService from "./services/address";
+import Notification from "./components/Notification";
+
 const App = () => {
   const [persons, setPersons] = useState([]);
   useEffect(() => {
@@ -12,21 +14,40 @@ const App = () => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [newName, setNewName] = useState("");
   const [filter, setFilter] = useState("");
-
+  const [Message, setMessage] = useState({message: null, isProblem: false});
   const handleFormSubmit = (event) => {
     event.preventDefault();
     if (persons.some((person) => person.name === newName)) {
-      if (window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`)) {
+      if (
+        window.confirm(
+          `${newName} is already added to phonebook, replace the old number with a new one?`
+        )
+      ) {
         const personToUpdate = persons.find((p) => p.name === newName);
         addressService
-          .updateEntry(personToUpdate.id, { name: newName, number: phoneNumber })
+          .updateEntry(personToUpdate.id, {
+            name: newName,
+            number: phoneNumber,
+          })
           .then((updatedPerson) => {
             setPersons(
               persons.map((person) =>
                 person.id !== personToUpdate.id ? person : updatedPerson
               )
             );
+            setMessage({message: `Updated ${newName}'s number successfully`, isProblem: false});
+          })
+          .catch((error) => {
+            setMessage(
+              {message: `Information of ${newName} has already been removed from server
+              ${error.message}`,
+              isProblem: true
+            });
+            setPersons(persons.filter((p) => p.id !== personToUpdate.id));
           });
+        setTimeout(() => {
+          setMessage({message: null, isProblem: false});
+        }, 5000);
       }
       setNewName("");
       setPhoneNumber("");
@@ -36,7 +57,11 @@ const App = () => {
       .addNew({ name: newName, number: phoneNumber })
       .then((data) => {
         setPersons([...persons, data]);
-      });
+      })
+    setMessage({message: `Added ${newName} successfully`, isProblem: false});
+    setTimeout(() => {
+      setMessage({message: null, isProblem: false});
+    }, 5000);
     setNewName("");
     setPhoneNumber("");
   };
@@ -58,6 +83,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification {...Message} />
       <Filter value={filter} onChange={handleFilterChange} />
       <h2>Add a new</h2>
       <PersonForm
