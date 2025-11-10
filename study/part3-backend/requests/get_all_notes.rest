@@ -1,0 +1,11 @@
+GET http://localhost:3001/api/notes
+### Request to get all notes
+POST http://localhost:3001/api/notes
+Content-Type: application/json
+
+{
+  "content": "This is a new note created via REST client",
+  "important": true
+}
+### Request to create a new note
+DELETE http://localhost:3001/api/notes/3
