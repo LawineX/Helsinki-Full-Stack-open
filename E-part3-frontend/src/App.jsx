@@ -14,7 +14,7 @@ const App = () => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [newName, setNewName] = useState("");
   const [filter, setFilter] = useState("");
-  const [Message, setMessage] = useState({message: null, isProblem: false});
+  const [Message, setMessage] = useState({ message: null, isProblem: false });
   const handleFormSubmit = (event) => {
     event.preventDefault();
     if (persons.some((person) => person.name === newName)) {
@@ -35,18 +35,21 @@ const App = () => {
                 person.id !== personToUpdate.id ? person : updatedPerson
               )
             );
-            setMessage({message: `Updated ${newName}'s number successfully`, isProblem: false});
+            setMessage({
+              message: `Updated ${newName}'s number successfully`,
+              isProblem: false,
+            });
           })
           .catch((error) => {
-            setMessage(
-              {message: `Information of ${newName} has already been removed from server
+            setMessage({
+              message: `Information of ${newName} has already been removed from server
               ${error.message}`,
-              isProblem: true
+              isProblem: true,
             });
             setPersons(persons.filter((p) => p.id !== personToUpdate.id));
           });
         setTimeout(() => {
-          setMessage({message: null, isProblem: false});
+          setMessage({ message: null, isProblem: false });
         }, 5000);
       }
       setNewName("");
@@ -57,10 +60,10 @@ const App = () => {
       .addNew({ name: newName, number: phoneNumber })
       .then((data) => {
         setPersons([...persons, data]);
-      })
-    setMessage({message: `Added ${newName} successfully`, isProblem: false});
+      });
+    setMessage({ message: `Added ${newName} successfully`, isProblem: false });
     setTimeout(() => {
-      setMessage({message: null, isProblem: false});
+      setMessage({ message: null, isProblem: false });
     }, 5000);
     setNewName("");
     setPhoneNumber("");
