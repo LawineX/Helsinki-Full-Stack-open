@@ -104,7 +104,7 @@
     "dev": "node --watch index.js",
     "start": "node index.js",
     "build:ui": "rm -rf dist && cd ../E-part3-frontend && npm run build && cp -r dist ../E-part3-backend/",
-    "deploy:full": "npm run build:ui && git add . && git commit -m uibuild && git push"
+    "deploy:full": "npm run build:ui && git add . && git commit -m uibuild && cd ../ && git push"
   },
   "author": "",
   "license": "ISC"
