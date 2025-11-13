@@ -1,5 +1,7 @@
 GET http://localhost:3001/api/notes
 ### Request to get all notes
+GET http://localhost:3001/api/notes/2
+### Request to get note with id 2
 POST http://localhost:3001/api/notes
 Content-Type: application/json
 

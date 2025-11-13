@@ -17,15 +17,16 @@ const App = () => {
   const [Message, setMessage] = useState({ message: null, isProblem: false });
   const handleFormSubmit = (event) => {
     event.preventDefault();
-    if (persons.some((person) => person.name === newName)) {
+    const personToUpdate = persons.find((p) => p.name === newName);
+
+    if (personToUpdate) {
       if (
         window.confirm(
           `${newName} is already added to phonebook, replace the old number with a new one?`
         )
       ) {
-        const personToUpdate = persons.find((p) => p.name === newName);
         addressService
-          .updateEntry(personToUpdate.id, {
+          .updatePerson(personToUpdate.id, {
             name: newName,
             number: phoneNumber,
           })
@@ -57,7 +58,7 @@ const App = () => {
       return;
     }
     addressService
-      .addNew({ name: newName, number: phoneNumber })
+      .addPerson({ name: newName, number: phoneNumber })
       .then((data) => {
         setPersons([...persons, data]);
       });
@@ -72,11 +73,11 @@ const App = () => {
   const handleFilterChange = (event) => setFilter(event.target.value);
   const handleDelete = (id) => {
     if (
-      window.confirm(`Are you sure you want to delete this entry?
+      window.confirm(`Are you sure you want to delete this person?
     ${persons.find((p) => p.id === id).name}
     number: ${persons.find((p) => p.id === id).number}`)
     ) {
-      addressService.deleteEntry(id).then(() => {
+      addressService.deletePerson(id).then(() => {
         setPersons(persons.filter((person) => person.id !== id));
       });
     } else {
