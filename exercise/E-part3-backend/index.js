@@ -8,6 +8,8 @@ app.use(
   morgan(":method :url :status :res[content-length] - :response-time ms :body")
 );
 app.use(morgan("body"));
+require("dotenv").config();
+const AddressBook = require("./models/address");
 
 const addressBook = [
   {
@@ -33,7 +35,9 @@ const addressBook = [
 ];
 
 app.get("/api/persons", (req, res) => {
-  res.json(addressBook);
+  AddressBook.find({}).then((addresses) => {
+    res.json(addresses);
+  });
 });
 
 app.get("/info", (req, res) => {
@@ -46,12 +50,13 @@ app.get("/info", (req, res) => {
 
 app.get("/api/persons/:id", (req, res) => {
   const id = req.params.id;
-  const person = addressBook.find((p) => p.id === id);
-  if (person) {
-    res.json(person);
-  } else {
-    res.status(404).end();
-  }
+  AddressBook.findById(id).then((person) => {
+    if (person) {
+      res.json(person);
+    } else {
+      res.status(404).end();
+    }
+  });
 });
 
 app.delete("/api/persons/:id", (req, res) => {
@@ -69,7 +74,9 @@ app.delete("/api/persons/:id", (req, res) => {
 
 app.post("/api/persons", (req, res) => {
   const checkNameExists = () =>
-    addressBook.find((p) => p.name === req.body.name);
+    AddressBook.find({ name: req.body.name }).then(
+      (person) => person !== null
+    );
   const checkBodyExists = () => !req.body.name || !req.body.number;
 
   if (checkBodyExists()) {
