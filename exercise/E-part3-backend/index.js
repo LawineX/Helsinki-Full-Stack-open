@@ -10,91 +10,97 @@ app.use(
 app.use(morgan("body"));
 require("dotenv").config();
 const AddressBook = require("./models/address");
+const PORT = process.env.PORT || 3001;
 
-const addressBook = [
-  {
-    id: "1",
-    name: "Arto Hellas",
-    number: "040-123456",
-  },
-  {
-    id: "2",
-    name: "Ada Lovelace",
-    number: "39-44-5323523",
-  },
-  {
-    id: "3",
-    name: "Dan Abramov",
-    number: "12-43-234345",
-  },
-  {
-    id: "4",
-    name: "Mary Poppendieck",
-    number: "39-23-6423122",
-  },
-];
-
-app.get("/api/persons", (req, res) => {
-  AddressBook.find({}).then((addresses) => {
-    res.json(addresses);
-  });
+app.get("/api/persons", (req, res, next) => {
+  AddressBook.find({})
+    .then((addresses) => {
+      res.json(addresses);
+    })
+    .catch((error) => next(error));
 });
 
-app.get("/info", (req, res) => {
-  const entryCount = addressBook.length;
-  const currentTime = new Date();
-  res.send(
-    `<p>Phonebook has info for <strong>${entryCount}</strong> people</p><p>${currentTime}</p>`
-  );
+app.get("/info", (req, res, next) => {
+  AddressBook.countDocuments({})
+    .then((entryCount) => {
+      const currentTime = new Date();
+      res.send(
+        `<p>Phonebook has info for <strong>${entryCount}</strong> people</p><p>${currentTime}</p>`
+      );
+    })
+    .catch((error) => next(error));
 });
 
-app.get("/api/persons/:id", (req, res) => {
+app.get("/api/persons/:id", (req, res, next) => {
+  AddressBook.findById(req.params.id)
+    .then((person) => {
+      if (person) {
+        res.json(person);
+      } else {
+        res.status(404).end();
+      }
+    })
+    .catch((error) => next(error));
+});
+
+app.delete("/api/persons/:id", (req, res, next) => {
+  AddressBook.findByIdAndDelete(req.params.id)
+    .then(() => {
+      res.status(204).end();
+    })
+    .catch((error) => next(error));
+});
+
+app.post("/api/persons", (req, res, next) => {
+  if (!req.body.name || !req.body.number) {
+    res.status(400).json({ error: "name or number is missing" });
+    return;
+  }
+  AddressBook.findOne({ name: req.body.name })
+    .then((person) => {
+      console.log(person);
+      if (person) {
+        throw new Error("Name must be unique");
+      }
+      const { name, number } = req.body;
+      const newPerson = new AddressBook({name, number });
+      return newPerson.save(); //返回promise,能解析出来mongoose的对象
+    })
+    .then((savedPerson) => {
+      console.log("Saved person:", savedPerson);
+      res.status(201).json(savedPerson); //mongoose对象转换为JSON,会自动调用toJSON方法
+    })
+    .catch((error) => next(error));
+});
+
+app.put("/api/persons/:id", (req, res, next) => {
   const id = req.params.id;
-  AddressBook.findById(id).then((person) => {
-    if (person) {
-      res.json(person);
-    } else {
-      res.status(404).end();
-    }
-  });
-});
-
-app.delete("/api/persons/:id", (req, res) => {
-  const id = req.params.id;
-  const index = addressBook.findIndex((p) => p.id === id);
-  if (index !== -1) {
-    addressBook.splice(index, 1);
-    // addressBook = addressBook.filter((p) => p.id !== id);
-    res.send("Person deleted");
-    res.status(204).end();
-  } else {
-    res.status(404).end();
-  }
-});
-
-app.post("/api/persons", (req, res) => {
-  const checkNameExists = () =>
-    AddressBook.find({ name: req.body.name }).then(
-      (person) => person !== null
-    );
-  const checkBodyExists = () => !req.body.name || !req.body.number;
-
-  if (checkBodyExists()) {
-    return res.status(400).json({ error: "name or number is missing" });
-  }
-  if (checkNameExists()) {
-    return res.status(400).json({ error: "name must be unique" });
-  }
-  const generateId = () => {
-    return Math.floor(Math.random() * 10000).toString();
-  };
   const { name, number } = req.body;
-  const newPerson = { id: generateId(), name, number };
-  addressBook.push(newPerson);
-  res.status(201).json(newPerson);
+  AddressBook.findByIdAndUpdate(
+    id,
+    { name, number },
+    { new: true, runValidators: true, context: "query" }
+  )
+    .then((updatedPerson) => {
+      if (!updatedPerson) {
+        return res.status(404).end();
+      }
+      res.json(updatedPerson);
+    })
+    .catch((error) => next(error));
 });
 
-const PORT = 3001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message);
+  if (error.name === "Error" && error.message === "Name must be unique") {
+    return response.status(400).send({ error: "Name must be unique" });
+  }
+  response.status(500).send({ error: "Internal server error" });
+  next(error);
+};
+
+app.use(errorHandler);

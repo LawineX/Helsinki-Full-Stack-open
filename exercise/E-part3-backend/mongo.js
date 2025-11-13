@@ -32,7 +32,6 @@ if (process.argv.length > 5) {
   const number = process.argv[4];
 
   const address = new Address({
-    id: Math.floor(Math.random() * 1000000),
     name: name,
     number: number,
   });

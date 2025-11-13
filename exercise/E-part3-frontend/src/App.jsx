@@ -3,7 +3,6 @@ import { PersonForm, Filter, Numbers } from "./components/Address";
 import axios from "axios";
 import addressService from "./services/address";
 import Notification from "./components/Notification";
-
 const App = () => {
   const [persons, setPersons] = useState([]);
   useEffect(() => {
@@ -60,14 +59,27 @@ const App = () => {
     addressService
       .addPerson({ name: newName, number: phoneNumber })
       .then((data) => {
+        console.log("Added person:", data);
         setPersons([...persons, data]);
+        setMessage({
+          message: `Added ${newName} successfully`,
+          isProblem: false,
+        });
+        setTimeout(() => {
+          setMessage({ message: null, isProblem: false });
+        }, 5000);
+        setNewName("");
+        setPhoneNumber("");
+      })
+      .catch((error) => {
+        setMessage({
+          message: `Failed to add ${newName}: ${error.response.data.error}`,
+          isProblem: true,
+        });
+        setTimeout(() => {
+          setMessage({ message: null, isProblem: false });
+        }, 5000);
       });
-    setMessage({ message: `Added ${newName} successfully`, isProblem: false });
-    setTimeout(() => {
-      setMessage({ message: null, isProblem: false });
-    }, 5000);
-    setNewName("");
-    setPhoneNumber("");
   };
 
   const handleFilterChange = (event) => setFilter(event.target.value);
@@ -80,6 +92,13 @@ const App = () => {
       addressService.deletePerson(id).then(() => {
         setPersons(persons.filter((person) => person.id !== id));
       });
+      setMessage({
+        message: `Deleted person successfully`,
+        isProblem: false,
+      });
+      setTimeout(() => {
+        setMessage({ message: null, isProblem: false });
+      }, 5000);
     } else {
       return;
     }
