@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { validate } = require("../../../study/part3-backend/models/note");
 
 mongoose.set("strictQuery", false);
 
@@ -16,8 +17,22 @@ mongoose
   });
 
 const addressSchema = new mongoose.Schema({
-  name: String,
-  number: String,
+  name: {
+    type: String,
+    minlength: 3,
+    required: true,
+  },
+  number: {
+    type: String,
+    minlength: 8,
+    validate: {
+      validator: function (v) {
+        return /\d{2,3}-\d+/.test(v);
+      },
+      message: (props) => `${props.value} is not a valid phone number!`,
+    },
+    required: true,
+  },
 });
 
 addressSchema.set("toJSON", {

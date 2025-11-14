@@ -73,7 +73,7 @@ const App = () => {
       })
       .catch((error) => {
         setMessage({
-          message: `Failed to add ${newName}: ${error.response.data.error}`,
+          message: `Person validation failed: ${error.response.data.error}`,
           isProblem: true,
         });
         setTimeout(() => {

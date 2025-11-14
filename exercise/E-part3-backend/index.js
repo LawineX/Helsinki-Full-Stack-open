@@ -52,10 +52,6 @@ app.delete("/api/persons/:id", (req, res, next) => {
 });
 
 app.post("/api/persons", (req, res, next) => {
-  if (!req.body.name || !req.body.number) {
-    res.status(400).json({ error: "name or number is missing" });
-    return;
-  }
   AddressBook.findOne({ name: req.body.name })
     .then((person) => {
       console.log(person);
@@ -63,7 +59,7 @@ app.post("/api/persons", (req, res, next) => {
         throw new Error("Name must be unique");
       }
       const { name, number } = req.body;
-      const newPerson = new AddressBook({name, number });
+      const newPerson = new AddressBook({ name, number });
       return newPerson.save(); //返回promise,能解析出来mongoose的对象
     })
     .then((savedPerson) => {
@@ -98,6 +94,8 @@ const errorHandler = (error, request, response, next) => {
   console.error(error.message);
   if (error.name === "Error" && error.message === "Name must be unique") {
     return response.status(400).send({ error: "Name must be unique" });
+  } else if (error.name === "ValidationError") {
+    return response.status(400).json({ error: error.message });
   }
   response.status(500).send({ error: "Internal server error" });
   next(error);
